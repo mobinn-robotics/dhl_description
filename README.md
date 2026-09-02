@@ -20,6 +20,9 @@ roslaunch dhl_description drive.launch
 
 The wheels have no sliders; they roll only when the base is driven.
 
+The storage rack is scenery, kept in its own description so it stays out of the
+robot's kinematic tree. `rack:=false` drops it, `rack_xyz:="1.4 0 0"` moves it.
+
 ## Kinematic tree
 
 ```

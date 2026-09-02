@@ -14,6 +14,10 @@
   <arg name="gui"        default="true" />   <!-- sliders for torso + arms -->
   <arg name="steering"   default="true" />   <!-- rqt slider panel for /cmd_vel -->
   <arg name="rviz"       default="true" />   <!-- off for headless runs -->
+  <arg name="rack"       default="true" />   <!-- storage rack scenery -->
+  <arg name="rack_model" default="$(find dhl_description)/urdf/rack.urdf.xacro" />
+  <arg name="rack_xyz"   default="1.0 0 0" />
+  <arg name="rack_rpy"   default="0 0 0" />
 
   <param name="robot_description" command="$(find xacro)/xacro '$(arg model)'" />
 
@@ -41,6 +45,18 @@
 
   <node name="robot_state_publisher" pkg="robot_state_publisher"
         type="robot_state_publisher" />
+
+  <!-- Scenery. Its own description and publisher, so the rack stays out of the
+       robot's kinematic tree; the remap points the publisher at rack_description. -->
+  <group if="$(arg rack)">
+    <param name="rack_description"
+           command="$(find xacro)/xacro '$(arg rack_model)'
+                    xyz:='$(arg rack_xyz)' rpy:='$(arg rack_rpy)'" />
+    <node name="rack_state_publisher" pkg="robot_state_publisher"
+          type="robot_state_publisher">
+      <remap from="robot_description" to="rack_description" />
+    </node>
+  </group>
 
   <node if="$(arg steering)" name="rqt_robot_steering"
         pkg="rqt_robot_steering" type="rqt_robot_steering" />

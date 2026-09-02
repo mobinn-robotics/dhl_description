@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+  Scenery, not robot: a storage rack placed in the world for the arms to work
+  against. It is a separate description so it never shows up in the robot's own
+  kinematic tree - robot_state_publisher just broadcasts the one fixed joint
+  that pins it to the world frame.
+
+  The mesh is 500 x 1500 x 1300 mm with its origin on the floor, centred on Y,
+  so the default pose puts it upright 1 m in front of the base.
+-->
+<robot name="rack" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="parent" default="odom" />
+  <xacro:arg name="xyz"    default="1.0 0 0" />
+  <xacro:arg name="rpy"    default="0 0 0" />
+
+  <link name="$(arg parent)" />
+
+  <joint name="rack_mount" type="fixed">
+    <origin xyz="$(arg xyz)" rpy="$(arg rpy)" />
+    <parent link="$(arg parent)" />
+    <child link="prt_rack_dummy" />
+  </joint>
+
+  <link name="prt_rack_dummy">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://dhl_description/meshes/prt_rack_dummy_1_2.stl"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="rack_steel">
+        <color rgba="0.42 0.45 0.48 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://dhl_description/meshes/prt_rack_dummy_1_2.stl"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+
+</robot>
