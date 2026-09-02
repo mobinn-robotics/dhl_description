@@ -16,8 +16,8 @@
   <arg name="rviz"       default="true" />   <!-- off for headless runs -->
   <arg name="rack"       default="true" />   <!-- storage rack scenery -->
   <arg name="rack_model" default="$(find dhl_description)/urdf/rack.urdf.xacro" />
-  <arg name="rack_xyz"   default="1.0 0 0" />
-  <arg name="rack_rpy"   default="0 0 0" />
+  <arg name="rack_xyz"   default="1.4 0 0" />
+  <arg name="rack_rpy"   default="0 0 3.14159265358979" />  <!-- shelves face the robot -->
 
   <param name="robot_description" command="$(find xacro)/xacro '$(arg model)'" />
 
