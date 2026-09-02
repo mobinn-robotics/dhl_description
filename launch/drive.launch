@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!--
+  Drive the DHL base around in RViz.
+
+  The wheels are commanded through /cmd_vel, not through sliders. fake_driver
+  integrates the twist into rolling wheel joints + an odom transform, and the
+  joint_state_publisher GUI gets a wheels_fixed copy of the description so it
+  only offers sliders for the torso and the two arms. The two nodes publish
+  disjoint sets of joint names onto /joint_states. Kinematic only - no physics.
+-->
+<launch>
+  <arg name="model"      default="$(find dhl_description)/urdf/dhl.urdf.xacro" />
+  <arg name="rvizconfig" default="$(find dhl_description)/rviz/dhl.rviz" />
+  <arg name="gui"        default="true" />   <!-- sliders for torso + arms -->
+  <arg name="steering"   default="true" />   <!-- rqt slider panel for /cmd_vel -->
+  <arg name="rviz"       default="true" />   <!-- off for headless runs -->
+
+  <param name="robot_description" command="$(find xacro)/xacro '$(arg model)'" />
+
+  <node name="fake_driver" pkg="dhl_description" type="fake_driver.py" output="screen">
+    <param name="wheel_radius" value="0.155" />
+    <param name="track_width"  value="0.5566" />
+    <param name="rate"         value="50.0" />
+    <!-- 0 keeps the last command instead of stopping when /cmd_vel goes quiet -->
+    <param name="cmd_timeout"  value="0.0" />
+  </node>
+
+  <!-- Private robot_description without movable wheels: joint_state_publisher
+       reads ~robot_description ahead of the global one, so the GUI drops the
+       four wheel sliders while RViz still shows the real, rolling model. -->
+  <node if="$(arg gui)" name="joint_state_publisher_gui"
+        pkg="joint_state_publisher_gui" type="joint_state_publisher_gui">
+    <param name="robot_description"
+           command="$(find xacro)/xacro '$(arg model)' wheels_fixed:=true" />
+  </node>
+  <node unless="$(arg gui)" name="joint_state_publisher"
+        pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="robot_description"
+           command="$(find xacro)/xacro '$(arg model)' wheels_fixed:=true" />
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher" />
+
+  <node if="$(arg steering)" name="rqt_robot_steering"
+        pkg="rqt_robot_steering" type="rqt_robot_steering" />
+
+  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz"
+        args="-d $(arg rvizconfig)" required="true" />
+</launch>

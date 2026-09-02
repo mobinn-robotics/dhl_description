@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>dhl_description</name>
+  <version>0.1.0</version>
+  <description>
+    DHL mobile manipulator description: 4-wheel mobile base + 4-DOF torso +
+    dual 7-DOF arms + 2 grippers. Self-contained: ships its own meshes and has
+    no dependency on the SolidWorks export packages the arms came from.
+    Visualization-only model (no inertia / transmission / ros_control).
+  </description>
+  <maintainer email="tazel7885@mobinn.co.kr">tazel</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>xacro</depend>
+  <depend>rospy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>roslaunch</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>joint_state_publisher_gui</depend>
+  <depend>rviz</depend>
+  <exec_depend>rqt_robot_steering</exec_depend>
+
+  <export>
+    <architecture_independent />
+  </export>
+</package>

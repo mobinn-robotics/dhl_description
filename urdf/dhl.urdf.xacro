@@ -1,0 +1,227 @@
+<?xml version="1.0"?>
+<!--
+  DHL mobile manipulator
+  ======================================================================
+    base_footprint
+     +. mobile_base                          (fixed,  z = 155 mm)
+         +. wheel_fr / _rr / _fl / _rl_Link  (continuous, pitch)
+         +. torso_link1                      (revolute, yaw)
+             +. torso_link2                  (revolute, pitch)
+                 +. torso_link3              (revolute, pitch)
+                     +. torso_link4          (revolute, pitch)
+                         +. right_arm_bracket : arm _R : dhl_hand_4_R : tcp_R
+                         +. left_arm_bracket  : arm _L : dhl_hand_4_L : tcp_L
+
+  Source data is given in mm / deg; lengths are multiplied by the "mm"
+  property and angles wrapped in xacro's radians(), so the numbers below
+  stay readable against the original table.
+
+  Arm links/joints come from left_arm_description / right_arm_description
+  via the generated macros, with "_R" / "_L" appended to every name.
+
+  NOTE: visualization model. Base/torso/hand links carry no <inertial>,
+  and there are no <transmission> tags or Gazebo plugins.
+-->
+<robot name="dhl" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Build the wheel joints as fixed instead of continuous. Used only for
+       the copy of the description handed to joint_state_publisher_gui, so the
+       GUI stops offering sliders for joints that /cmd_vel already drives. -->
+  <xacro:arg name="wheels_fixed" default="false" />
+
+  <!-- ============================ units ============================ -->
+  <xacro:property name="mm" value="0.001" />
+  <xacro:property name="PI" value="3.14159265358979" />
+  <xacro:property name="mesh_scale" value="0.001 0.001 0.001" />
+
+  <!-- Placeholders: the export gives effort=0 velocity=0, which no
+       controller can use. Override on the xacro command line if needed. -->
+  <xacro:property name="arm_effort" value="100.0" />
+  <xacro:property name="arm_velocity" value="3.14" />
+  <xacro:property name="torso_effort" value="300.0" />
+  <xacro:property name="torso_velocity" value="1.57" />
+  <xacro:property name="wheel_effort" value="100.0" />
+  <xacro:property name="wheel_velocity" value="10.0" />
+
+  <!-- TODO: torso ranges were not supplied - these are placeholders. -->
+  <xacro:property name="torso1_lower" value="${-PI}" />
+  <xacro:property name="torso1_upper" value="${PI}" />
+  <xacro:property name="torso2_lower" value="${-PI/2}" />
+  <xacro:property name="torso2_upper" value="${PI/2}" />
+  <xacro:property name="torso3_lower" value="${-2.618}" />
+  <xacro:property name="torso3_upper" value="${2.618}" />
+  <xacro:property name="torso4_lower" value="${-2.618}" />
+  <xacro:property name="torso4_upper" value="${2.618}" />
+
+  <xacro:include filename="$(find dhl_description)/urdf/arm7_left.xacro" />
+  <xacro:include filename="$(find dhl_description)/urdf/arm7_right.xacro" />
+
+  <!-- ========================== materials ========================== -->
+  <material name="dhl_light">
+    <color rgba="0.898 0.918 0.929 1.0" />
+  </material>
+  <material name="dhl_grey">
+    <color rgba="0.55 0.57 0.60 1.0" />
+  </material>
+  <material name="dhl_dark">
+    <color rgba="0.18 0.18 0.20 1.0" />
+  </material>
+
+  <!-- Body built from one of the STL/ meshes (mm -> m). -->
+  <xacro:macro name="dhl_body" params="mesh material">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://dhl_description/meshes/${mesh}" scale="${mesh_scale}" />
+      </geometry>
+      <material name="${material}" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://dhl_description/meshes/${mesh}" scale="${mesh_scale}" />
+      </geometry>
+    </collision>
+  </xacro:macro>
+
+  <!-- ========================= mobile base ========================= -->
+  <!-- Ground-projection frame; wheel radius is 155 mm, so the base
+       origin (= wheel axle height) sits 155 mm above the floor. -->
+  <link name="base_footprint" />
+
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0 0 ${155*mm}" rpy="0 0 0" />
+    <parent link="base_footprint" />
+    <child link="mobile_base" />
+  </joint>
+
+  <link name="mobile_base">
+    <xacro:dhl_body mesh="mobile_base.stl" material="dhl_light" />
+  </link>
+
+  <!-- Wheels: axis is the local Z, turned into a pitch axis by roll=90 deg.
+       The four meshes are already handed, so all four share the same rpy. -->
+  <xacro:macro name="dhl_wheel" params="name x y">
+    <xacro:unless value="$(arg wheels_fixed)">
+      <joint name="${name}_joint" type="continuous">
+        <origin xyz="${x*mm} ${y*mm} 0" rpy="${radians(90)} 0 0" />
+        <parent link="mobile_base" />
+        <child link="${name}_Link" />
+        <axis xyz="0 0 1" />
+        <limit effort="${wheel_effort}" velocity="${wheel_velocity}" />
+      </joint>
+    </xacro:unless>
+    <xacro:if value="$(arg wheels_fixed)">
+      <joint name="${name}_joint" type="fixed">
+        <origin xyz="${x*mm} ${y*mm} 0" rpy="${radians(90)} 0 0" />
+        <parent link="mobile_base" />
+        <child link="${name}_Link" />
+      </joint>
+    </xacro:if>
+    <link name="${name}_Link">
+      <xacro:dhl_body mesh="${name}.stl" material="dhl_dark" />
+    </link>
+  </xacro:macro>
+
+  <xacro:dhl_wheel name="wheel_fr" x="316"  y="278.3"  />
+  <xacro:dhl_wheel name="wheel_rr" x="-316" y="278.3"  />
+  <xacro:dhl_wheel name="wheel_fl" x="316"  y="-278.3" />
+  <xacro:dhl_wheel name="wheel_rl" x="-316" y="-278.3" />
+
+  <!-- ============================ torso ============================ -->
+  <joint name="torso_joint1" type="revolute">
+    <origin xyz="${323*mm} 0 ${119.5*mm}" rpy="0 0 0" />
+    <parent link="mobile_base" />
+    <child link="torso_link1" />
+    <axis xyz="0 0 1" />
+    <limit lower="${torso1_lower}" upper="${torso1_upper}"
+           effort="${torso_effort}" velocity="${torso_velocity}" />
+  </joint>
+  <link name="torso_link1">
+    <xacro:dhl_body mesh="torso_joint1.stl" material="dhl_grey" />
+  </link>
+
+  <joint name="torso_joint2" type="revolute">
+    <origin xyz="0 0 ${43*mm}" rpy="${radians(90)} 0 0" />
+    <parent link="torso_link1" />
+    <child link="torso_link2" />
+    <axis xyz="0 0 1" />
+    <limit lower="${torso2_lower}" upper="${torso2_upper}"
+           effort="${torso_effort}" velocity="${torso_velocity}" />
+  </joint>
+  <link name="torso_link2">
+    <xacro:dhl_body mesh="torso_joint2.stl" material="dhl_light" />
+  </link>
+
+  <joint name="torso_joint3" type="revolute">
+    <origin xyz="0 ${275*mm} 0" rpy="0 0 0" />
+    <parent link="torso_link2" />
+    <child link="torso_link3" />
+    <axis xyz="0 0 1" />
+    <limit lower="${torso3_lower}" upper="${torso3_upper}"
+           effort="${torso_effort}" velocity="${torso_velocity}" />
+  </joint>
+  <link name="torso_link3">
+    <xacro:dhl_body mesh="torso_joint3.stl" material="dhl_light" />
+  </link>
+
+  <joint name="torso_joint4" type="revolute">
+    <origin xyz="0 ${275*mm} 0" rpy="0 0 0" />
+    <parent link="torso_link3" />
+    <child link="torso_link4" />
+    <axis xyz="0 0 1" />
+    <limit lower="${torso4_lower}" upper="${torso4_upper}"
+           effort="${torso_effort}" velocity="${torso_velocity}" />
+  </joint>
+  <link name="torso_link4">
+    <xacro:dhl_body mesh="torso_joint4.stl" material="dhl_grey" />
+  </link>
+
+  <!-- ======================= arm mount brackets ======================= -->
+  <joint name="right_mount" type="fixed">
+    <origin xyz="0 ${260.5*mm} ${-100*mm}" rpy="${radians(180)} 0 ${radians(90)}" />
+    <parent link="torso_link4" />
+    <child link="right_arm_bracket" />
+  </joint>
+  <link name="right_arm_bracket" />
+
+  <joint name="left_mount" type="fixed">
+    <origin xyz="0 ${260.5*mm} ${100*mm}" rpy="0 0 ${radians(90)}" />
+    <parent link="torso_link4" />
+    <child link="left_arm_bracket" />
+  </joint>
+  <link name="left_arm_bracket" />
+
+  <!-- ============================= arms ============================= -->
+  <xacro:arm7_right suffix="_R" parent="right_arm_bracket">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:arm7_right>
+
+  <xacro:arm7_left suffix="_L" parent="left_arm_bracket">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:arm7_left>
+
+  <!-- ============================= hands ============================= -->
+  <xacro:macro name="dhl_hand" params="suffix">
+    <joint name="hand_mount${suffix}" type="fixed">
+      <origin xyz="${-106*mm} 0 0" rpy="${radians(90)} ${radians(90)} 0" />
+      <parent link="wrist2_Link${suffix}" />
+      <child link="dhl_hand_4${suffix}" />
+    </joint>
+    <link name="dhl_hand_4${suffix}">
+      <xacro:dhl_body mesh="dhl_hand_4.stl" material="dhl_grey" />
+    </link>
+    <!-- Grasp frame. The hand mesh runs from y = +5 mm to y = -120 mm in
+         its own frame, so -120 mm on Y is the fingertip plane. -->
+    <joint name="tcp_joint${suffix}" type="fixed">
+      <origin xyz="0 ${-120*mm} 0" rpy="0 0 0" />
+      <parent link="dhl_hand_4${suffix}" />
+      <child link="tcp${suffix}" />
+    </joint>
+    <link name="tcp${suffix}" />
+  </xacro:macro>
+
+  <xacro:dhl_hand suffix="_R" />
+  <xacro:dhl_hand suffix="_L" />
+
+</robot>
