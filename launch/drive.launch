@@ -55,6 +55,12 @@
     <node name="rack_state_publisher" pkg="robot_state_publisher"
           type="robot_state_publisher">
       <remap from="robot_description" to="rack_description" />
+      <!-- The rack has one fixed joint and nothing movable, so its transform
+           goes out on /tf_static at startup and it never needs a joint state.
+           Point the subscription at a topic nobody publishes, or it picks up
+           the robot's wheel states and warns about joints it has never heard
+           of, once every 10 s, forever. -->
+      <remap from="joint_states" to="rack_joint_states" />
     </node>
   </group>
 
