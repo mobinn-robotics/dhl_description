@@ -16,29 +16,12 @@ roslaunch dhl_description drive.launch
 
 ## Using it
 
-RViz comes up with the robot on a grid, plus two control windows:
+`drive.launch` brings up everything. Two windows control the robot:
 
-* **`joint_state_publisher_gui`** — one slider per torso and arm joint (18).
-* **`rqt_robot_steering`** — linear/angular sliders that publish `/cmd_vel`.
+* **`joint_state_publisher_gui`** — a slider per torso and arm joint (18).
+* **`rqt_robot_steering`** — linear/angular sliders that drive the base.
 
-The four wheels have no sliders; they roll only in response to `/cmd_vel`.
-Anything publishing `geometry_msgs/Twist` works just as well:
-
-```bash
-rostopic pub -r 10 /cmd_vel geometry_msgs/Twist '{linear: {x: 0.4}, angular: {z: 0.2}}'
-```
-
-`drive.launch` args: `gui:=false`, `steering:=false`, `rviz:=false` (headless),
-`model:=<path>`, `rvizconfig:=<path>`.
-
-### Topics
-
-| | |
-|---|---|
-| `/cmd_vel` (sub) | `geometry_msgs/Twist` — base velocity command |
-| `/joint_states` (pub) | the 4 wheel joints, from `fake_driver` |
-| `/odom` (pub) | `nav_msgs/Odometry` |
-| TF | `odom -> base_footprint`, then the full model from `robot_state_publisher` |
+The wheels have no sliders; they roll only when the base is driven.
 
 ## Kinematic tree
 
