@@ -1,19 +1,20 @@
 # dhl_description
 
-ROS 1 (Noetic) description package for the DHL mobile manipulator: a four-wheel
+ROS 2 (Jazzy) description package for the DHL mobile manipulator: a four-wheel
 mobile base, a 4-DOF torso, two 7-DOF arms and two grippers — 22 movable joints.
-Self-contained; it needs nothing but a stock Noetic install.
+Self-contained; it needs nothing but a stock Jazzy install plus `xacro`,
+`joint_state_publisher(_gui)` and `rqt_robot_steering`.
 
 ```bash
-cd ~/catkin_ws/src
+cd ~/ros2_ws/src
 git clone git@github.com:mobinn-robotics/dhl_description.git
-cd ~/catkin_ws && catkin_make && source devel/setup.bash
-roslaunch dhl_description drive.launch
+cd ~/ros2_ws && colcon build --symlink-install && source install/setup.bash
+ros2 launch dhl_description drive.launch.py
 ```
 
 ## Using it
 
-`drive.launch` brings up everything. Two windows control the robot:
+`drive.launch.py` brings up everything. Two windows control the robot:
 
 * **`joint_state_publisher_gui`** — a slider per torso and arm joint (18).
 * **`rqt_robot_steering`** — linear/angular sliders that drive the base.
